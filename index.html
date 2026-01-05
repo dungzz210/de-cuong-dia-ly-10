@@ -128,7 +128,6 @@
 <script>
     // ==================== DATA ====================
 
-    // Multiple Choice Questions (exact from your first file)
     const multipleQuestions = [
         { q: "Từ xích đạo về cực là các khối khí lần lượt là", a: ["Xích đạo, chí tuyến, ôn đới, cực.", "Xích đạo, ôn đới, chí tuyến, cực.", "Xích đạo, cực, ôn đới, chí tuyến.", "Xích đạo, chí tuyến, cực, ôn đới."], c: 0 },
         { q: "Trên bề mặt Trái Đất không có khối khí nào sau đây?", a: ["Chí tuyến lục địa.", "Xích đạo lục địa.", "Ôn đới lục địa.", "Cực lục địa."], c: 1 },
@@ -172,7 +171,6 @@
         { q: "Sự thay đổi có quy luật của tất cả các thành phần địa lí từ xích đạo đến cực là biểu hiện của quy luật", a: ["địa đới.", "địa ô.", "thống nhất và hoàn chỉnh.", "đai cao."], c: 0 }
     ];
 
-    // True/False Questions (exact from dungsai.html)
     const trueFalseQuestions = [
         {
             id: 1, title: "Câu 1: Cho bảng số liệu nhiệt độ ở bán cầu Bắc:",
@@ -236,7 +234,6 @@
         }
     ];
 
-    // Short Answer Questions (exact from traloingan.html)
     const shortData = [
         {
             id: 1,
@@ -274,6 +271,16 @@
         }
     ];
 
+    // ==================== HÀM SHUFFLE ====================
+    function shuffle(array) {
+        let arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
     // ==================== NAVIGATION ====================
     function startMode(mode) {
         document.getElementById('home-screen').classList.add('hidden');
@@ -300,11 +307,9 @@
     // ==================== MULTIPLE CHOICE ====================
     let mcQuestions = [], mcUserAnswers = [];
 
-    function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
-
     function initMultipleChoice() {
-        mcQuestions = shuffle([...multipleQuestions]);
-        mcQuestions = mcQuestions.map(q => {
+        let shuffledQuestions = shuffle([...multipleQuestions]);
+        mcQuestions = shuffledQuestions.map(q => {
             const correctText = q.a[q.c];
             const shuffledOpts = shuffle([...q.a]);
             return { ...q, options: shuffledOpts, correctText: correctText };
@@ -358,24 +363,27 @@
 
     // ==================== TRUE/FALSE ====================
     let tfUserAnswers = {};
+    let currentTFQuestions = [];
 
     function initTrueFalse() {
+        currentTFQuestions = shuffle([...trueFalseQuestions]);
+
         const container = document.getElementById('tf-quiz-content');
-        container.innerHTML = trueFalseQuestions.map(q => `
+        container.innerHTML = currentTFQuestions.map((q, qIndex) => `
             <div class="quiz-card">
-                <div class="q-title">${q.title}</div>
+                <div class="q-title">Câu ${qIndex + 1}: ${q.title.replace(/^Câu \d+:\s*/, '')}</div>
                 ${q.table ? `<div class="table-container">${q.table}</div>` : ''}
                 ${q.passage ? `<div class="passage">${q.passage}</div>` : ''}
                 <div class="options">
                     ${q.options.map((opt, i) => `
-                        <div class="option-item" id="tf-row-${q.id}-${i}">
+                        <div class="option-item" id="tf-row-${qIndex}-${i}">
                             <div style="flex:1">
                                 <strong>${String.fromCharCode(97+i)}.</strong> ${opt.t}
-                                <div id="tf-fb-${q.id}-${i}" class="feedback" style="display:none"></div>
+                                <div id="tf-fb-${qIndex}-${i}" class="feedback" style="display:none"></div>
                             </div>
                             <div class="btn-group">
-                                <button class="tf-btn" onclick="tfSet(${q.id},${i},true,this)">Đúng</button>
-                                <button class="tf-btn" onclick="tfSet(${q.id},${i},false,this)">Sai</button>
+                                <button class="tf-btn" onclick="tfSet(${qIndex},${i},true,this)">Đúng</button>
+                                <button class="tf-btn" onclick="tfSet(${qIndex},${i},false,this)">Sai</button>
                             </div>
                         </div>
                     `).join('')}
@@ -385,12 +393,12 @@
 
         document.getElementById('tf-submit-btn').onclick = function() {
             let score = 0, total = 0;
-            trueFalseQuestions.forEach(q => {
+            currentTFQuestions.forEach((q, qIndex) => {
                 q.options.forEach((opt, i) => {
                     total++;
-                    const ans = tfUserAnswers[`${q.id}-${i}`];
-                    const row = document.getElementById(`tf-row-${q.id}-${i}`);
-                    const fb = document.getElementById(`tf-fb-${q.id}-${i}`);
+                    const ans = tfUserAnswers[`${qIndex}-${i}`];
+                    const row = document.getElementById(`tf-row-${qIndex}-${i}`);
+                    const fb = document.getElementById(`tf-fb-${qIndex}-${i}`);
                     fb.style.display = 'block';
                     if (ans === opt.c) {
                         score++;
@@ -410,34 +418,35 @@
         };
     }
 
-    function tfSet(qId, oIdx, val, btn) {
-        tfUserAnswers[`${qId}-${oIdx}`] = val;
+    function tfSet(qIndex, oIdx, val, btn) {
+        tfUserAnswers[`${qIndex}-${oIdx}`] = val;
         btn.parentElement.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
     }
 
     // ==================== SHORT ANSWER ====================
-    function shuffle(array) { let a = [...array]; for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+    let currentShortQuestions = [];
 
     function initShortAnswer() {
+        currentShortQuestions = shuffle([...shortData]);
+
         const container = document.getElementById('short-quiz-content');
-        const shuffled = shuffle(shortData);
-        container.innerHTML = shuffled.map((q, index) => `
+        container.innerHTML = currentShortQuestions.map((q, index) => `
             <div class="short-card">
                 <div class="q-title">Câu ${index + 1}: ${q.title}</div>
                 ${q.table ? q.table : ''}
                 <p>${q.desc}</p>
                 <div class="input-group">
-                    <input type="text" id="short-ans-${q.id}" placeholder="Nhập kết quả là số...">
-                    <div class="short-feedback" id="short-fb-${q.id}"></div>
+                    <input type="text" id="short-ans-${index}" placeholder="Nhập kết quả là số...">
+                    <div class="short-feedback" id="short-fb-${index}"></div>
                 </div>
             </div>
         `).join('');
 
         document.getElementById('short-submit-btn').onclick = function() {
-            shortData.forEach(q => {
-                const input = document.getElementById(`short-ans-${q.id}`);
-                const fb = document.getElementById(`short-fb-${q.id}`);
+            currentShortQuestions.forEach((q, index) => {
+                const input = document.getElementById(`short-ans-${index}`);
+                const fb = document.getElementById(`short-fb-${index}`);
                 if (!input) return;
                 const userVal = input.value.trim();
                 fb.style.display = 'block';
