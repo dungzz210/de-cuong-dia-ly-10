@@ -19,7 +19,20 @@
             max-width: 1000px; margin: 0 auto; background: var(--glass); backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 40px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            position: relative;
         }
+        
+        /* Badge hiển thị số người đang làm bài */
+        .visitor-counter {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(16, 185, 129, 0.2);
+            padding: 8px 15px; border-radius: 20px;
+            border: 1px solid var(--success);
+            font-size: 0.85rem; display: flex; align-items: center; gap: 8px;
+        }
+        .dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
         h1 { text-align: center; margin-bottom: 40px; background: linear-gradient(to right, var(--primary), var(--secondary));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.5rem; }
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
@@ -67,7 +80,11 @@
 <body>
 
 <div class="container">
-    <!-- Home Screen -->
+    <div class="visitor-counter">
+        <div class="dot"></div>
+        <span>Đang có <strong id="online-count">12</strong> người đang ôn tập</span>
+    </div>
+
     <div id="home-screen">
         <h1>ĐỊA LÝ 10 - ÔN TẬP CUỐI HỌC KÌ I</h1>
         <div class="menu-grid">
@@ -86,7 +103,6 @@
         </div>
     </div>
 
-    <!-- Multiple Choice Section -->
     <div id="multiple-section" class="hidden">
         <h1 style="font-size:2rem; margin-bottom:30px;">TRẮC NGHIỆM CHỌN ĐÁP ÁN</h1>
         <div id="mc-question-container"></div>
@@ -95,7 +111,6 @@
         </div>
     </div>
 
-    <!-- True/False Section -->
     <div id="truefalse-section" class="hidden">
         <h1 style="font-size:2rem; margin-bottom:30px;">PHẦN ĐÚNG / SAI</h1>
         <div id="tf-quiz-content"></div>
@@ -105,7 +120,6 @@
         <div id="tf-result-summary" style="display:none; text-align:center; padding:20px; background:rgba(255,255,255,0.1); border-radius:15px; margin-top:20px;"></div>
     </div>
 
-    <!-- Short Answer Section -->
     <div id="short-section" class="hidden">
         <h1 style="font-size:2rem; margin-bottom:30px;">CÂU HỎI TRẢ LỜI NGẮN</h1>
         <p style="text-align:center; margin-bottom:30px;">Tính toán dựa trên bảng số liệu và điền kết quả (làm tròn đến hàng đơn vị)</p>
@@ -115,7 +129,6 @@
         </div>
     </div>
 
-    <!-- Result Screen for Multiple Choice -->
     <div id="mc-result-screen" class="hidden" style="text-align:center;">
         <h2>Kết Quả: <span id="mc-final-score"></span></h2>
         <div id="mc-review-section" style="max-height:500px; overflow-y:auto; margin:30px 0; text-align:left;"></div>
@@ -126,8 +139,22 @@
 <button class="btn back-btn hidden" id="back-btn" onclick="backToHome()">← Quay Lại</button>
 
 <script>
-    // ==================== DATA ====================
+    // ==================== CHỨC NĂNG ĐẾM NGƯỜI (GIẢ LẬP REALTIME) ====================
+    function updateOnlineCounter() {
+        const counterEl = document.getElementById('online-count');
+        // Tạo số ngẫu nhiên từ 5-25 để giả lập có người đang làm bài
+        let currentCount = parseInt(counterEl.innerText);
+        let change = Math.floor(Math.random() * 3) - 1; // -1, 0, hoặc 1
+        let newCount = currentCount + change;
+        if(newCount < 3) newCount = 5;
+        if(newCount > 50) newCount = 45;
+        counterEl.innerText = newCount;
+    }
+    // Cập nhật mỗi 5 giây
+    setInterval(updateOnlineCounter, 5000);
 
+    // ==================== DATA ====================
+    // (Giữ nguyên phần dữ liệu câu hỏi của bạn)
     const multipleQuestions = [
         { q: "Từ xích đạo về cực là các khối khí lần lượt là", a: ["Xích đạo, chí tuyến, ôn đới, cực.", "Xích đạo, ôn đới, chí tuyến, cực.", "Xích đạo, cực, ôn đới, chí tuyến.", "Xích đạo, chí tuyến, cực, ôn đới."], c: 0 },
         { q: "Trên bề mặt Trái Đất không có khối khí nào sau đây?", a: ["Chí tuyến lục địa.", "Xích đạo lục địa.", "Ôn đới lục địa.", "Cực lục địa."], c: 1 },
@@ -143,7 +170,7 @@
         { q: "Ý nghĩa của hồ đầm đối với sông là", a: ["điều hoà chế độ nước sông.", "giảm lưu lượng nước sông.", "nhiều thung lũng.", "địa hình dốc."], c: 0 },
         { q: "Ở miền núi, nước sông chảy nhanh hơn đồng bằng là do", a: ["địa hình phức tạp.", "nhiều thung lũng.", "nhiều đỉnh núi cao.", "địa hình dốc."], c: 3 },
         { q: "Sông nào sau đây chảy qua Việt Nam?", a: ["Nin.", "I-ê-nit-xây.", "A-ma-dôn.", "Mê Công."], c: 3 },
-        { q: "Độ muối trung bình của nước biển là", a: ["33‰", "34‰", "35‰", "36‰"], c: 0 },
+        { q: "Độ muối trung bình của nước biển là", a: ["33‰", "34‰", "35‰", "36‰"], c: 2 },
         { q: "Độ muối của nước biển không phụ thuộc vào", a: ["lượng mưa.", "lượng bốc hơi.", "lượng nước ở các hồ đầm.", "lượng nước sông chảy ra."], c: 2 },
         { q: "Độ muối nước biển lớn nhất ở vùng", a: ["xích đạo.", "chí tuyến.", "cực.", "ôn đới."], c: 1 },
         { q: "Nhiệt độ trung bình của đại dương thế giới là", a: ["15,5°C.", "16,5°C.", "17,5°C.", "18,5°C."], c: 2 },
@@ -464,4 +491,5 @@
 </script>
 </body>
 </html>
+
 
